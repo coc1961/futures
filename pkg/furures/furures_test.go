@@ -52,7 +52,7 @@ func TestFutures(t *testing.T) {
 	// Wait for function end with 10 seconds timeout
 	done = future.Wait(time.Second * 10)
 
-	// Get Values Ok
+	// Get Values Error
 	value, err = future.Values()
 
 	assert.Equal(t, true, done)
@@ -78,7 +78,7 @@ func TestFutures(t *testing.T) {
 	// Wait for function end with 10 seconds timeout
 	done = future.Wait(time.Second * 10)
 
-	// Get Values Ok
+	// Get Values Error
 	value, err = future.Values()
 
 	assert.Equal(t, true, done)
@@ -104,7 +104,7 @@ func TestFutures(t *testing.T) {
 	// Wait for function end with 1 seconds timeout
 	done = future.Wait(time.Second * 1)
 
-	// Get Values Ok
+	// Get Values Error
 	value, err = future.Values()
 
 	assert.Equal(t, false, done)
@@ -132,7 +132,7 @@ func TestFutures(t *testing.T) {
 	// Wait for function end with 1 seconds timeout
 	done = future.Wait(time.Second * 10)
 
-	// Get Values Ok
+	// Get Values Error
 	value, err = future.Values()
 
 	assert.Equal(t, true, done)
