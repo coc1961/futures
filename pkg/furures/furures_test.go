@@ -9,6 +9,15 @@ import (
 )
 
 func TestFutures(t *testing.T) {
+
+	/*
+	******************************
+	** Invalid Future Creation
+	******************************
+	 */
+	_, err := New(nil)
+	assert.NotNil(t, err)
+
 	/*
 	******************************
 	** Test 1 Run Ok
@@ -22,13 +31,13 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 2 seconds
-	future := New(fnFuture, time.Second*10)
+	future, _ := New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 10 seconds timeout
 	done := future.Wait(time.Second * 10)
 
 	// Get Values Ok
-	value, err := future.Values()
+	value, err := future.Result()
 
 	assert.Equal(t, true, done)
 	assert.Nil(t, err)
@@ -47,13 +56,13 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 2 seconds
-	future = New(fnFuture, time.Second*2)
+	future, _ = New(fnFuture, WithTimeout(time.Second*2))
 
 	// Wait for function end with 10 seconds timeout
 	done = future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Values()
+	value, err = future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
@@ -73,13 +82,13 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future = New(fnFuture, time.Second*10)
+	future, _ = New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 10 seconds timeout
 	done = future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Values()
+	value, err = future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
@@ -99,13 +108,13 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future = New(fnFuture, time.Second*10)
+	future, _ = New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 1 seconds timeout
 	done = future.Wait(time.Second * 1)
 
 	// Get Values Error
-	value, err = future.Values()
+	value, err = future.Result()
 
 	assert.Equal(t, false, done)
 	assert.NotNil(t, err)
@@ -124,7 +133,7 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future = New(fnFuture, time.Second*10)
+	future, _ = New(fnFuture, WithTimeout(time.Second*10))
 
 	// Cancel Future
 	future.Cancel()
@@ -133,7 +142,7 @@ func TestFutures(t *testing.T) {
 	done = future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Values()
+	value, err = future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
