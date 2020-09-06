@@ -1,7 +1,6 @@
 package futures
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes a second
-	fnFuture := func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 1)
 		return "Ok", nil
 	}
@@ -50,7 +49,7 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 10 seconds
-	fnFuture = func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error) {
+	fnFuture = func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 10)
 		return "Ok", nil
 	}
@@ -75,9 +74,10 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 3 seconds and run cancel()
-	fnFuture = func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error) {
+	fnFuture = func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 3)
-		cancel()
+		future.Cancel()
+		time.Sleep(time.Second * 3)
 		return "Ok", nil
 	}
 
@@ -101,9 +101,8 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 3 seconds and run cancel()
-	fnFuture = func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error) {
-		time.Sleep(time.Second * 3)
-		cancel()
+	fnFuture = func(future FutureParam) (result interface{}, err error) {
+		time.Sleep(time.Second * 5)
 		return "Ok", nil
 	}
 
@@ -127,7 +126,7 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 10 seconds and run cancel()
-	fnFuture = func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error) {
+	fnFuture = func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 10)
 		return "Ok", nil
 	}

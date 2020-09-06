@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type FutureFunction func(ctx context.Context, cancel context.CancelFunc) (result interface{}, err error)
+type FutureFunction func(future FutureParam) (result interface{}, err error)
 
 type OptionFN func(*future)
 
@@ -17,9 +17,14 @@ func WithTimeout(timeout time.Duration) OptionFN {
 }
 
 type Future interface {
+	FutureParam
 	Wait(d time.Duration) bool
 	Result() (result interface{}, err error)
+}
+
+type FutureParam interface {
 	Cancel()
+	Context() *context.Context
 }
 
 type future struct {
@@ -64,6 +69,11 @@ func New(fn FutureFunction, options ...OptionFN) (Future, error) {
 
 	return f.start(), nil
 }
+
+func (f *future) Context() *context.Context {
+	return &f.ctx
+}
+
 func (f *future) Cancel() {
 	if f.cancel != nil {
 		f.cancel()
@@ -102,7 +112,7 @@ func (f *future) start() *future {
 func (f *future) waitFunctionEnd() {
 	ret := make(chan bool)
 	go func() {
-		v, e := f.fn(f.ctx, f.cancel)
+		v, e := f.fn(f)
 		f.valueCh <- v
 		f.errCh <- e
 		ret <- true
