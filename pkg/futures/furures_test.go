@@ -65,6 +65,7 @@ func TestFutures(t *testing.T) {
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
+	assert.Equal(t, "context deadline exceeded", err.Error())
 	assert.Equal(t, nil, value)
 
 	/*
@@ -92,6 +93,7 @@ func TestFutures(t *testing.T) {
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
+	assert.Equal(t, "context canceled", err.Error())
 	assert.Equal(t, nil, value)
 
 	/*
@@ -117,6 +119,7 @@ func TestFutures(t *testing.T) {
 
 	assert.Equal(t, false, done)
 	assert.NotNil(t, err)
+	assert.Equal(t, "running", err.Error())
 	assert.Equal(t, nil, value)
 
 	/*
@@ -145,6 +148,33 @@ func TestFutures(t *testing.T) {
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
+	assert.Equal(t, "context canceled", err.Error())
+	assert.Equal(t, nil, value)
+
+	/*
+	******************************
+	** Test 6 Function Panic Recover
+	******************************
+	 */
+
+	// function that takes 10 seconds and run cancel()
+	fnFuture = func(future FutureParam) (result interface{}, err error) {
+		time.Sleep(time.Second * 1)
+		panic("function panic")
+	}
+
+	// Create a Future with timeout 10 seconds
+	future, _ = New(fnFuture, WithTimeout(time.Second*10))
+
+	// Wait for function end with 1 seconds timeout
+	done = future.Wait(time.Second * 10)
+
+	// Get Values Error
+	value, err = future.Result()
+
+	assert.Equal(t, true, done)
+	assert.NotNil(t, err)
+	assert.Equal(t, "function panic", err.Error())
 	assert.Equal(t, nil, value)
 
 }

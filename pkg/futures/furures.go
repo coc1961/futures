@@ -2,34 +2,35 @@ package futures
 
 import (
 	"context"
-	"errors"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type FutureFunction func(future FutureParam) (result interface{}, err error)
 
-type OptionFN func(*future)
+type Option func(*future)
 
-func WithTimeout(timeout time.Duration) OptionFN {
+func WithTimeout(timeout time.Duration) Option {
 	return func(f *future) {
 		f.timeout = timeout
 	}
 }
 
 type Future interface {
-	FutureParam
 	Wait(d time.Duration) bool
 	Result() (result interface{}, err error)
+	Cancel()
 }
 
 type FutureParam interface {
 	Cancel()
-	Context() *context.Context
+	Done() <-chan struct{}
 }
 
 type future struct {
 	// Function
-	fn FutureFunction
+	futureFunc FutureFunction
 
 	// Optional timeout
 	timeout time.Duration
@@ -37,10 +38,6 @@ type future struct {
 	// function return values
 	value interface{}
 	err   error
-
-	// function return values chan
-	valueCh chan interface{}
-	errCh   chan error
 
 	// exit chan
 	done chan bool
@@ -50,28 +47,25 @@ type future struct {
 	ctx    context.Context
 }
 
-func New(fn FutureFunction, options ...OptionFN) (Future, error) {
+func New(fn FutureFunction, options ...Option) (Future, error) {
 	if fn == nil {
 		return nil, errors.New("function must not be null")
 	}
 	f := &future{
-		fn:      fn,
-		value:   nil,
-		err:     nil,
-		done:    make(chan bool, 1),
-		valueCh: make(chan interface{}, 1),
-		errCh:   make(chan error, 1),
-		timeout: time.Duration(-1),
+		futureFunc: fn,
+		value:      nil,
+		err:        nil,
+		done:       make(chan bool, 10),
+		timeout:    time.Duration(-1),
 	}
 	for _, op := range options {
 		op(f)
 	}
-
 	return f.start(), nil
 }
 
-func (f *future) Context() *context.Context {
-	return &f.ctx
+func (f *future) Done() <-chan struct{} {
+	return f.ctx.Done()
 }
 
 func (f *future) Cancel() {
@@ -103,49 +97,44 @@ func (f *future) start() *future {
 		f.ctx, f.cancel = context.WithTimeout(context.Background(), f.timeout)
 	}
 
-	go f.waitFunctionEnd()
-	go f.testExitConditions()
+	go f.run()
 
 	return f
 }
 
-func (f *future) waitFunctionEnd() {
-	ret := make(chan bool)
-	go func() {
-		v, e := f.fn(f)
-		f.valueCh <- v
-		f.errCh <- e
-		ret <- true
-	}()
-
-	select {
-	case <-ret:
-	case <-f.ctx.Done():
-		f.value = nil
-		f.err = f.ctx.Err()
-		return
+func (f *future) error(i interface{}) error {
+	switch x := i.(type) {
+	case error:
+		return x
+	case string:
+		return errors.New(x)
+	default:
+		return errors.Errorf("%v", x)
 	}
 }
 
-func (f *future) testExitConditions() {
+func (f *future) run() {
 	defer func() {
 		f.done <- true
 	}()
 
+	exitOk := make(chan bool)
+	go func() {
+		defer func() {
+			if ret := recover(); ret != nil {
+				f.err = f.error(ret)
+				f.done <- true
+			}
+		}()
+		f.value, f.err = f.futureFunc(f)
+		exitOk <- true
+	}()
+
 	select {
-	case f.value = <-f.valueCh:
-		e := <-f.errCh
-		if f.err == nil {
-			f.err = e
-		}
-		if f.err != nil {
-			f.value = nil
-		}
-		return
+	case <-exitOk:
 	case <-f.ctx.Done():
 		f.value = nil
 		f.err = f.ctx.Err()
 		return
 	}
-
 }
