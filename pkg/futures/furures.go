@@ -9,11 +9,11 @@ import (
 
 type FutureFunction func(future FutureParam) (result interface{}, err error)
 
-type Option func(*future)
+type Option func(*futureConfig)
 
 func WithTimeout(timeout time.Duration) Option {
-	return func(f *future) {
-		f.timeout = timeout
+	return func(f *futureConfig) {
+		f.timeout = &timeout
 	}
 }
 
@@ -29,12 +29,6 @@ type FutureParam interface {
 }
 
 type future struct {
-	// Function
-	futureFunc FutureFunction
-
-	// Optional timeout
-	timeout time.Duration
-
 	// function return values
 	value interface{}
 	err   error
@@ -47,21 +41,37 @@ type future struct {
 	ctx    context.Context
 }
 
+type futureConfig struct {
+	// Optional timeout
+	timeout *time.Duration
+}
+
 func New(fn FutureFunction, options ...Option) (Future, error) {
 	if fn == nil {
 		return nil, errors.New("function must not be null")
 	}
 	f := &future{
-		futureFunc: fn,
-		value:      nil,
-		err:        nil,
-		done:       make(chan bool, 10),
-		timeout:    time.Duration(-1),
+		value: nil,
+		err:   nil,
+		done:  make(chan bool, 10),
+	}
+
+	ff := &futureConfig{
+		timeout: nil,
 	}
 	for _, op := range options {
-		op(f)
+		op(ff)
 	}
-	return f.start(), nil
+
+	if ff.timeout == nil {
+		f.ctx, f.cancel = context.WithCancel(context.Background())
+	} else {
+		f.ctx, f.cancel = context.WithTimeout(context.Background(), *ff.timeout)
+	}
+
+	go f.run(fn)
+
+	return f, nil
 }
 
 func (f *future) Done() <-chan struct{} {
@@ -90,18 +100,6 @@ func (f *future) Result() (result interface{}, err error) {
 	return nil, errors.New("running")
 }
 
-func (f *future) start() *future {
-	if f.timeout == time.Duration(-1) {
-		f.ctx, f.cancel = context.WithCancel(context.Background())
-	} else {
-		f.ctx, f.cancel = context.WithTimeout(context.Background(), f.timeout)
-	}
-
-	go f.run()
-
-	return f
-}
-
 func (f *future) error(i interface{}) error {
 	switch x := i.(type) {
 	case error:
@@ -113,22 +111,22 @@ func (f *future) error(i interface{}) error {
 	}
 }
 
-func (f *future) run() {
+func (f *future) run(fn FutureFunction) {
 	defer func() {
 		f.done <- true
 	}()
 
 	exitOk := make(chan bool)
-	go func() {
+	go func(fn FutureFunction) {
 		defer func() {
 			if ret := recover(); ret != nil {
 				f.err = f.error(ret)
 				exitOk <- false
 			}
 		}()
-		f.value, f.err = f.futureFunc(f)
+		f.value, f.err = fn(f)
 		exitOk <- true
-	}()
+	}(fn)
 
 	select {
 	case <-exitOk:
