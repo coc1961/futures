@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFutures(t *testing.T) {
+func TestNew(t *testing.T) {
 
 	/*
 	******************************
@@ -16,6 +16,9 @@ func TestFutures(t *testing.T) {
 	 */
 	_, err := New(nil)
 	assert.NotNil(t, err)
+}
+
+func TestFutures_Ok(t *testing.T) {
 
 	/*
 	******************************
@@ -41,6 +44,8 @@ func TestFutures(t *testing.T) {
 	assert.Equal(t, true, done)
 	assert.Nil(t, err)
 	assert.Equal(t, "Ok", value)
+}
+func TestFutures_Timeout(t *testing.T) {
 
 	/*
 	******************************
@@ -49,24 +54,26 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 10 seconds
-	fnFuture = func(future FutureParam) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 10)
 		return "Ok", nil
 	}
 
 	// Create a Future with timeout 2 seconds
-	future, _ = New(fnFuture, WithTimeout(time.Second*2))
+	future, _ := New(fnFuture, WithTimeout(time.Second*2))
 
 	// Wait for function end with 10 seconds timeout
-	done = future.Wait(time.Second * 10)
+	done := future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Result()
+	value, err := future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
 	assert.Equal(t, "context deadline exceeded", err.Error())
 	assert.Equal(t, nil, value)
+}
+func TestFutures_CancelProcess(t *testing.T) {
 
 	/*
 	******************************
@@ -75,7 +82,7 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 3 seconds and run cancel()
-	fnFuture = func(future FutureParam) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 3)
 		future.Cancel()
 		time.Sleep(time.Second * 3)
@@ -83,18 +90,20 @@ func TestFutures(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ = New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 10 seconds timeout
-	done = future.Wait(time.Second * 10)
+	done := future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Result()
+	value, err := future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
 	assert.Equal(t, "context canceled", err.Error())
 	assert.Equal(t, nil, value)
+}
+func TestFutures_Running(t *testing.T) {
 
 	/*
 	******************************
@@ -103,24 +112,26 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 3 seconds and run cancel()
-	fnFuture = func(future FutureParam) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 5)
 		return "Ok", nil
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ = New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 1 seconds timeout
-	done = future.Wait(time.Second * 1)
+	done := future.Wait(time.Second * 1)
 
 	// Get Values Error
-	value, err = future.Result()
+	value, err := future.Result()
 
 	assert.Equal(t, false, done)
 	assert.NotNil(t, err)
 	assert.Equal(t, "running", err.Error())
 	assert.Equal(t, nil, value)
+}
+func TestFutures_Cancel(t *testing.T) {
 
 	/*
 	******************************
@@ -129,27 +140,29 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 10 seconds and run cancel()
-	fnFuture = func(future FutureParam) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 10)
 		return "Ok", nil
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ = New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(fnFuture, WithTimeout(time.Second*10))
 
 	// Cancel Future
 	future.Cancel()
 
 	// Wait for function end with 1 seconds timeout
-	done = future.Wait(time.Second * 10)
+	done := future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Result()
+	value, err := future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)
 	assert.Equal(t, "context canceled", err.Error())
 	assert.Equal(t, nil, value)
+}
+func TestFutures_Panic(t *testing.T) {
 
 	/*
 	******************************
@@ -158,19 +171,19 @@ func TestFutures(t *testing.T) {
 	 */
 
 	// function that takes 10 seconds and run cancel()
-	fnFuture = func(future FutureParam) (result interface{}, err error) {
+	fnFuture := func(future FutureParam) (result interface{}, err error) {
 		time.Sleep(time.Second * 1)
 		panic("function panic")
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ = New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 1 seconds timeout
-	done = future.Wait(time.Second * 10)
+	done := future.Wait(time.Second * 10)
 
 	// Get Values Error
-	value, err = future.Result()
+	value, err := future.Result()
 
 	assert.Equal(t, true, done)
 	assert.NotNil(t, err)

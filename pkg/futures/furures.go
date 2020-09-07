@@ -123,7 +123,7 @@ func (f *future) run() {
 		defer func() {
 			if ret := recover(); ret != nil {
 				f.err = f.error(ret)
-				f.done <- true
+				exitOk <- false
 			}
 		}()
 		f.value, f.err = f.futureFunc(f)
