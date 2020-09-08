@@ -38,6 +38,10 @@ func (m *MyFuture) Done() bool {
 	return m.future.Wait(time.Second * 1)
 }
 
+func (m *MyFuture) Cancel() {
+	m.future.Cancel()
+}
+
 func (m *MyFuture) Result() (int, error) {
 	v, e := m.future.Result()
 	return v.(int), e

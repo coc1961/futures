@@ -8,19 +8,53 @@ Example:
 
 ```go
 
-// Future function that takes 10 seconds
-fnFuture := func(future FutureParam) (result interface{}, err error) {
-    time.Sleep(time.Second * 10)
-    return "Ok", nil
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/coc1961/futures/pkg/futures"
+)
+
+func main() {
+	mf := NewMyFuture()
+
+	for !mf.Done() {
+		fmt.Println("Waiting...")
+	}
+
+	value, err := mf.Result()
+
+	fmt.Println(value, err)
 }
 
-// Create a Future with timeout 20 seconds
-future, err := New(fnFuture, WithTimeout(time.Second*20))
+func NewMyFuture() *MyFuture {
+	f := &MyFuture{}
+	f.future, _ = futures.New(f.run)
+	return f
+}
 
-// Wait for function end with 10 seconds timeout
-done := future.Wait(time.Second * 10)
+type MyFuture struct {
+	future futures.Future
+}
 
-// Get Values Error
-value, err := future.Result()
+func (m *MyFuture) run(future futures.FutureParam) (result interface{}, err error) {
+	time.Sleep(time.Second * 10)
+	return 1000, nil
+}
+
+func (m *MyFuture) Done() bool {
+	return m.future.Wait(time.Second * 1)
+}
+
+func (m *MyFuture) Cancel() {
+	m.future.Cancel()
+}
+
+func (m *MyFuture) Result() (int, error) {
+	v, e := m.future.Result()
+	return v.(int), e
+}
 
 ```
