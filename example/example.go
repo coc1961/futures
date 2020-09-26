@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -21,7 +22,7 @@ func main() {
 
 func NewMyFuture() *MyFuture {
 	f := &MyFuture{}
-	f.future, _ = futures.New(f.run)
+	f.future, _ = futures.New(context.Background(), f.run)
 	return f
 }
 

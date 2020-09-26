@@ -1,6 +1,7 @@
 package futures
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ func TestNew(t *testing.T) {
 	** Invalid Future Creation
 	******************************
 	 */
-	_, err := New(nil)
+	_, err := New(context.Background(), nil)
 	assert.NotNil(t, err)
 }
 
@@ -33,7 +34,7 @@ func TestFutures_Ok(t *testing.T) {
 	}
 
 	// Create a Future with timeout 2 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 10 seconds timeout
 	done := future.Wait(time.Second * 10)
@@ -60,7 +61,7 @@ func TestFutures_Timeout(t *testing.T) {
 	}
 
 	// Create a Future with timeout 2 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*2))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*2))
 
 	// Wait for function end with 10 seconds timeout
 	done := future.Wait(time.Second * 10)
@@ -90,7 +91,7 @@ func TestFutures_CancelProcess(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 10 seconds timeout
 	done := future.Wait(time.Second * 10)
@@ -118,7 +119,7 @@ func TestFutures_Running(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 1 seconds timeout
 	done := future.Wait(time.Second * 1)
@@ -146,7 +147,7 @@ func TestFutures_Cancel(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*10))
 
 	// Cancel Future
 	future.Cancel()
@@ -177,7 +178,7 @@ func TestFutures_Panic(t *testing.T) {
 	}
 
 	// Create a Future with timeout 10 seconds
-	future, _ := New(fnFuture, WithTimeout(time.Second*10))
+	future, _ := New(context.Background(), fnFuture, WithTimeout(time.Second*10))
 
 	// Wait for function end with 1 seconds timeout
 	done := future.Wait(time.Second * 10)

@@ -26,6 +26,7 @@ type Future interface {
 type FutureParam interface {
 	Cancel()
 	Done() <-chan struct{}
+	Context() context.Context
 }
 
 type future struct {
@@ -46,7 +47,7 @@ type futureConfig struct {
 	timeout *time.Duration
 }
 
-func New(fn FutureFunction, options ...Option) (Future, error) {
+func New(ctx context.Context, fn FutureFunction, options ...Option) (Future, error) {
 	if fn == nil {
 		return nil, errors.New("function must not be null")
 	}
@@ -64,9 +65,9 @@ func New(fn FutureFunction, options ...Option) (Future, error) {
 	}
 
 	if ff.timeout == nil {
-		f.ctx, f.cancel = context.WithCancel(context.Background())
+		f.ctx, f.cancel = context.WithCancel(ctx)
 	} else {
-		f.ctx, f.cancel = context.WithTimeout(context.Background(), *ff.timeout)
+		f.ctx, f.cancel = context.WithTimeout(ctx, *ff.timeout)
 	}
 
 	go f.run(fn)
@@ -82,6 +83,10 @@ func (f *future) Cancel() {
 	if f.cancel != nil {
 		f.cancel()
 	}
+}
+
+func (f *future) Context() context.Context {
+	return f.ctx
 }
 
 func (f *future) Wait(d time.Duration) bool {
