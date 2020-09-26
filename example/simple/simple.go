@@ -10,16 +10,17 @@ import (
 
 const max = 300
 
-var t = Test{0}
-
 func main() {
+	var t = Test{0}
 
+	// Make Futures
 	th := make([]futures.Future, 0)
 	for i := 0; i < max; i++ {
-		f, _ := MakeFuture()
+		f, _ := futures.New(context.Background(), t.run)
 		th = append(th, f)
 	}
 
+	// Wait and get result
 	i := 0
 	for i < max {
 		if !th[i].Wait(time.Second) {
@@ -29,10 +30,6 @@ func main() {
 		fmt.Print(r, "-")
 		i++
 	}
-}
-
-func MakeFuture() (futures.Future, error) {
-	return futures.New(context.Background(), t.run)
 }
 
 type Test struct {
