@@ -37,6 +37,9 @@ type future struct {
 	// exit chan
 	done chan bool
 
+	// finished process?
+	processExit bool
+
 	// Context
 	cancel context.CancelFunc
 	ctx    context.Context
@@ -90,6 +93,9 @@ func (f *future) Context() context.Context {
 }
 
 func (f *future) Wait(d time.Duration) bool {
+	if f.processExit {
+		return true
+	}
 	select {
 	case <-f.done:
 		return true
@@ -135,6 +141,7 @@ func (f *future) run(fn FutureFunction) {
 
 	select {
 	case <-exitOk:
+		f.processExit = true
 	case <-f.ctx.Done():
 		f.value = nil
 		f.err = f.ctx.Err()
