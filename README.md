@@ -1,10 +1,8 @@
 # futures
 
-Future, Golang Implementation
+> Future, Golang Implementation
 
-> IMPORTANT example project !!
-
-Example:
+### Example:
 
 ```go
 
