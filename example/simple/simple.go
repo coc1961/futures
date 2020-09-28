@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/coc1961/futures/pkg/futures"
@@ -23,13 +24,18 @@ func main() {
 	// Wait and get result
 	i := 0
 	for i < max {
-		if !th[i].Wait(time.Second) {
+		if !th[i].Wait(time.Microsecond) {
 			continue
 		}
-		r, _ := th[i].Result()
-		fmt.Print(r, "-")
+		r, e := th[i].Result()
+		if e != nil {
+			fmt.Print(e, "-")
+		} else {
+			fmt.Print(r, "-")
+		}
 		i++
 	}
+	fmt.Println("\nExit")
 }
 
 type Test struct {
@@ -37,7 +43,10 @@ type Test struct {
 }
 
 func (t *Test) run(future futures.FutureParam) (result interface{}, err error) {
-	time.Sleep(5 * time.Second)
+	time.Sleep(time.Duration(rand.ExpFloat64()*10) * time.Millisecond)
 	t.cont++
+	if t.cont == 100 {
+		panic("(error 100)")
+	}
 	return t.cont, nil
 }
